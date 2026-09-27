@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transit-core"
+version = "0.1.0"
+description = "Расписание, онлайн map matching и признаки для предиктора задержек"
+requires-python = ">=3.12"
+dependencies = ["numpy>=1.26", "pandas>=2.1"]
+
+[tool.setuptools]
+packages = ["transit_core"]

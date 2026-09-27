@@ -1,0 +1,8 @@
+**
+!libs/ndtp/**
+!libs/transit_core/**
+!services/backend/**
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+**/build

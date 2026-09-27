@@ -1,0 +1,7 @@
+**
+!libs/ndtp/**
+!services/replayer/**
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+**/build

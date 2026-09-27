@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transit-mlcore"
+version = "1.0.0"
+description = "ML-ядро предиктора задержек: обучение, инференс, API"
+requires-python = ">=3.12"
+
+[tool.setuptools]
+packages = ["mlcore"]

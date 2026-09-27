@@ -1,0 +1,7 @@
+# Используйте, если Docker пишет «all predefined address pools have been fully subnetted»:
+#   COMPOSE_FILE=docker-compose.yml:compose.subnet.yml docker compose up -d --build
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${COMPOSE_SUBNET:-10.213.77.0/24}

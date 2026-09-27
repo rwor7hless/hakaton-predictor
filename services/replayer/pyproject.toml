@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "replayer"
+version = "0.1.0"
+description = "Проигрывание исторического traffic.csv в NDTP-поток"
+requires-python = ">=3.11"
+dependencies = [
+    "ndtp",
+    "fastapi>=0.110,<1",
+    "uvicorn>=0.29",
+]
+
+[tool.setuptools]
+packages = ["replayer"]

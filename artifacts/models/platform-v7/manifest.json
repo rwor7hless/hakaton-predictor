@@ -1,0 +1,41 @@
+{
+  "config": {
+    "features": "plan",
+    "residual": true,
+    "depth": 6,
+    "iterations": 1500
+  },
+  "columns": [
+    "cur_dev",
+    "lead",
+    "gap_prev_plan",
+    "gap_next_plan",
+    "tgt_role",
+    "n_plan_between",
+    "plan_since_lp",
+    "tgt_stop",
+    "route"
+  ],
+  "seeds": 5,
+  "n_train": 3893,
+  "version": "platform-v7",
+  "weights": {
+    "residual_catboost": 0.8,
+    "gru": 0.2
+  },
+  "platform_score": 1.0,
+  "platform_score_source": "Reported by team member; not independently verified",
+  "source_commit": "90be581481c8830db8e4fd8cac12c66e1de98f51",
+  "local_test_mae": 66.16056613829517,
+  "limitations": "Blend weights selected using repeated platform feedback. Local test and folds already explored. No independent new-day evaluation.",
+  "submission_sha256": "67cdd8073e829130b977ce0f991a13ba1c28b10c8d654a032dc3168defac0e8b",
+  "files_sha256": {
+    "model_0.cbm": "0c9b2b9cca9cd4b2eefe81bd8b239a9b86736ac2ec49e9be4ba861b5135944e4",
+    "model_1.cbm": "788a6f4fcdab84a991453ffc63f4f07bc1bd074a9925e27bfb262763cdde11bf",
+    "model_2.cbm": "15b7dd0e9ba3c614883da0ab068c065934f04d610a66ee834696eeaf767441ca",
+    "model_3.cbm": "b0106950aed983bc7c107edd9ed8e2d77a580f2ee48bc9dd7280d9fc4b3595d2",
+    "model_4.cbm": "6dca999ff710f9931755e93913e691f2bcdc489d7741097eba6e0cab7e277c9a",
+    "seq_offline.pt": "3f83105c0acf81e4e141da6dd925599c677808b1759ccab34374b8f47489508f",
+    "seq_offline_meta.json": "062c378da6c62be03ecad94a36447d2c5bfcac34fa92075dfeff7f92983ff4da"
+  }
+}

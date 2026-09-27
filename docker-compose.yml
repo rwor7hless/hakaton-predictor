@@ -1,0 +1,71 @@
+name: transit-predictor
+
+x-dataset: &dataset ${DATASET_DIR:-./data/dataset}:/data:ro
+
+services:
+  ml:
+    build: { context: ., dockerfile: services/ml/Dockerfile }
+    image: transit-ml:1.0
+    ports: ["8001:8001"]
+    volumes:
+      - ./artifacts:/artifacts
+      - *dataset
+    restart: unless-stopped
+
+  backend:
+    build: { context: ., dockerfile: services/backend/Dockerfile }
+    image: transit-backend:1.0
+    ports: ["8000:8000", "9201:9201"]
+    environment:
+      ML_URL: http://ml:8001
+      PREDICT_EVERY_S: ${PREDICT_EVERY_S:-30}
+    volumes:
+      - ./artifacts:/artifacts:ro
+      - *dataset
+    depends_on:
+      ml: { condition: service_started }
+    restart: unless-stopped
+
+  replayer:
+    build: { context: ., dockerfile: services/replayer/Dockerfile }
+    image: transit-replayer:1.0
+    ports: ["8090:8090"]
+    environment:
+      NDTP_HOST: backend
+      NDTP_PORT: 9201
+      REPLAY_SPEED: ${REPLAY_SPEED:-10}
+      REPLAY_START: ${REPLAY_START:-06:30}
+      REPLAY_WARMUP_MIN: ${REPLAY_WARMUP_MIN:-20}
+      REPLAY_AUTOSTART: ${REPLAY_AUTOSTART:-1}
+    volumes:
+      - *dataset
+    depends_on:
+      backend: { condition: service_healthy }
+    restart: unless-stopped
+
+  docs:
+    build: { context: ., dockerfile: docs/Dockerfile }
+    image: transit-docs:1.0
+    volumes:
+      - docs-site:/out
+
+  dashboard:
+    build: { context: ., dockerfile: services/dashboard/Dockerfile }
+    image: transit-dashboard:1.0
+    ports: ["${DASHBOARD_PORT:-8080}:8080"]
+    volumes:
+      - docs-site:/usr/share/nginx/html/docs-site:ro
+    depends_on:
+      backend: { condition: service_started }
+      replayer: { condition: service_started }
+      docs: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  emulator:
+    image: ndtp-telemetry-emulator:1.0
+    profiles: ["emulator"]
+    ports: ["18080:18080"]
+    restart: unless-stopped
+
+volumes:
+  docs-site: {}

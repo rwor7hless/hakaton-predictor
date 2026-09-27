@@ -1,0 +1,11 @@
+**
+!libs/**
+!services/backend/**
+!services/ml/mlcore/**
+!services/replayer/**
+!docs/**
+!README.md
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+docs/_build

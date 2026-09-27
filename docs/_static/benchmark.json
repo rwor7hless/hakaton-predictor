@@ -1,0 +1,66 @@
+{
+  "ml": {
+    "batch1_plain": {
+      "p50_ms": 18.7,
+      "p95_ms": 45.3
+    },
+    "batch1_shap": {
+      "p50_ms": 43.1,
+      "p95_ms": 92.2
+    },
+    "batch13_plain": {
+      "p50_ms": 20.8,
+      "p95_ms": 47.0
+    },
+    "batch13_shap": {
+      "p50_ms": 69.7,
+      "p95_ms": 135.5
+    },
+    "batch30_plain": {
+      "p50_ms": 22.0,
+      "p95_ms": 47.7
+    },
+    "batch30_shap": {
+      "p50_ms": 158.9,
+      "p95_ms": 170.8
+    },
+    "batch100_plain": {
+      "p50_ms": 29.4,
+      "p95_ms": 79.3
+    },
+    "batch100_shap": {
+      "p50_ms": 255.1,
+      "p95_ms": 263.9
+    }
+  },
+  "tracker": {
+    "points": 90952,
+    "total_s": 2.09,
+    "us_per_point": 23.0,
+    "points_per_s": 43552
+  },
+  "backend_metrics": {
+    "online": {
+      "mae_s": 70.2,
+      "n": 4482,
+      "naive_mae_s": 129.6,
+      "horizon_ok_share": 1.0,
+      "mean_lead_min": 11.33,
+      "retro_predictions": 0
+    },
+    "latency": {
+      "ingest_to_prediction_ms_p50": 74.60808753967285,
+      "ingest_to_prediction_ms_p95": 116.85941219329828,
+      "data_age_at_prediction_ms_p50": 140.06435871124268,
+      "ml_predict_ms_p50": 70.93788249949284,
+      "ml_predict_ms_p95": 106.33187960024742
+    },
+    "throughput": {
+      "packets_per_s": 162.7,
+      "queue_len": 0,
+      "predictions_total": 6445,
+      "packets_total": 39232
+    },
+    "offline": {}
+  }
+}

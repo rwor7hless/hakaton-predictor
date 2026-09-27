@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+data/dataset/*.tar
+artifacts/cache/
+artifacts/models/v-*
+artifacts/submission-*.csv
+docs/_build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.env
+catboost_info/
+:memory:.ses

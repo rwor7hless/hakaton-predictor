@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ndtp"
+version = "0.1.0"
+description = "Кодек и asyncio-сервер телематического протокола NDTP (G6CellNav00 и др.)"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+packages = ["ndtp"]
+
+[tool.setuptools.package-data]
+ndtp = ["py.typed"]

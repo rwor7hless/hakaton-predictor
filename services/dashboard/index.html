@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffffff">
+  <title>Диспетчерская: прогноз задержек</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2316202a'/%3E%3Crect x='6' y='9' width='20' height='14' rx='3' fill='%23fff'/%3E%3Crect x='6' y='19' width='20' height='4' fill='%23cf3528'/%3E%3Ccircle cx='11' cy='25' r='2' fill='%23fff'/%3E%3Ccircle cx='21' cy='25' r='2' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preload" href="vendor/fonts/golos-text-cyrillic-wght.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fonts/fira-sans-extra-condensed-latin-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/map.css">
+  <script src="vendor/maplibre/maplibre-gl.js"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="app" id="app" data-view="monitor">
+    <header class="top">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__txt"><b>Прогноз задержек</b><span>наземный транспорт Москвы</span></span>
+      </div>
+      <nav class="views" role="tablist" aria-label="Разделы">
+        <button type="button" role="tab" id="tab-monitor" data-act="view" data-view="monitor" aria-selected="true" aria-controls="view-monitor">Мониторинг</button>
+        <button type="button" role="tab" id="tab-analytics" data-act="view" data-view="analytics" aria-selected="false" aria-controls="view-analytics" tabindex="-1">Аналитика</button>
+      </nav>
+      <section class="kpis" id="kpis" aria-label="Сводка по парку"></section>
+      <div class="top__right">
+        <div class="clock" id="clock"></div>
+        <div class="link-wrap" id="link"></div>
+        <button type="button" class="flowbtn" id="flow-btn" data-act="dialog" data-dialog="dlg-stream" aria-haspopup="dialog"></button>
+        <a class="docs" href="/docs-site/" target="_blank" rel="noopener">Документация</a>
+      </div>
+    </header>
+
+    <div class="banners" id="banners" hidden></div>
+
+    <div class="view view--monitor" id="view-monitor" role="tabpanel" aria-labelledby="tab-monitor">
+      <div class="ws" id="ws" data-left="on" data-card="on">
+        <section class="panel left" id="left-panel" aria-label="Инциденты и ТС">
+          <header class="panel__head">
+            <div class="ptabs" id="left-tabs" role="tablist" aria-label="Список"></div>
+            <button type="button" class="icon-btn" data-act="fold" data-side="left" aria-controls="left-panel" aria-expanded="true" aria-label="Свернуть список" title="Свернуть список"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8.5 4 4.5 8l4 4M12.5 4l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </header>
+          <div class="left__filters" id="left-filters" role="group" aria-label="Фильтры списка"></div>
+          <div class="left__body">
+            <ul class="inc-list" id="inc-list"></ul>
+            <ul class="veh-list" id="veh-list" hidden></ul>
+            <p class="empty left__empty" id="left-empty" hidden></p>
+            <button type="button" class="more" id="veh-more" data-act="unsched" aria-controls="veh-ctx" hidden></button>
+            <ul class="veh-list veh-list--ctx" id="veh-ctx" hidden></ul>
+          </div>
+        </section>
+        <button type="button" class="fold fold--left" id="fold-left" data-act="fold" data-side="left" aria-controls="left-panel" aria-expanded="false" title="Развернуть список инцидентов и ТС"></button>
+
+        <section class="panel mapwrap" aria-label="Карта маршрутной сети">
+          <div id="map"></div>
+          <div class="mapctl">
+            <button type="button" class="mapbtn" data-act="fit">Вся сеть</button>
+            <button type="button" class="mapbtn" data-act="ctx" aria-pressed="false" title="Машины из телеметрии, для которых нет расписания: прогноз по ним не строится">ТС без расписания</button>
+          </div>
+          <div class="maplegend" aria-hidden="true">
+            <span><i class="ml ml--red"></i>Критично</span>
+            <span><i class="ml ml--yellow"></i>Внимание</span>
+            <span><i class="ml ml--green"></i>По графику</span>
+            <span><i class="ml ml--layover"></i>На отстое</span>
+            <span><i class="ml-path"></i>Путь до цели прогноза</span>
+          </div>
+          <p class="map-note" id="map-note" hidden></p>
+          <div class="map-hot" id="map-hot" role="status" hidden></div>
+        </section>
+
+        <aside class="panel card" id="card" aria-label="Карточка ТС"></aside>
+        <button type="button" class="fold fold--card" id="fold-card" data-act="fold" data-side="card" aria-controls="card" aria-expanded="false" title="Развернуть карточку ТС"></button>
+      </div>
+    </div>
+
+    <div class="view view--analytics" id="view-analytics" role="tabpanel" aria-labelledby="tab-analytics" hidden>
+      <section class="panel an-q" id="an-quality" aria-labelledby="an-q-t"></section>
+      <section class="panel an-p" id="an-perf" aria-labelledby="an-p-t"></section>
+      <section class="panel an-h" id="an-hot" aria-labelledby="an-h-t"></section>
+      <section class="panel an-l" id="an-log" aria-labelledby="an-l-t"></section>
+    </div>
+  </div>
+
+  <dialog class="dlg" id="dlg-stream" aria-labelledby="dlg-stream-t">
+    <header class="dlg__head">
+      <h2 id="dlg-stream-t">Поток телеметрии</h2>
+      <button type="button" class="dlg__x" data-act="close" aria-label="Закрыть"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </header>
+    <p class="dlg__lead">Проигрыватель отправляет в backend по NDTP записанный день из датасета. Перед стартом прогоняется 20 минут истории, чтобы у модели был контекст.</p>
+    <form class="player" id="player" autocomplete="off">
+      <label class="field">
+        <span>Начать с</span>
+        <input type="text" id="pl-time" value="07:40" inputmode="numeric" pattern="([01]\d|2[0-3]):[0-5]\d" maxlength="5" size="5" placeholder="ЧЧ:ММ" title="Время начала потока, ЧЧ:ММ" required>
+      </label>
+      <div class="field">
+        <span id="pl-speed-l">Скорость</span>
+        <div class="seg" role="group" aria-labelledby="pl-speed-l">
+          <button type="button" data-act="speed" data-speed="1" aria-pressed="false">×1</button>
+          <button type="button" data-act="speed" data-speed="10" aria-pressed="true">×10</button>
+          <button type="button" data-act="speed" data-speed="20" aria-pressed="false">×20</button>
+          <button type="button" data-act="speed" data-speed="60" aria-pressed="false">×60</button>
+        </div>
+      </div>
+      <div class="player__btns">
+        <button type="submit" class="btn btn--primary" id="pl-start">Запустить заново</button>
+        <button type="button" class="btn" id="pl-pause" data-act="pause" disabled>Пауза</button>
+        <button type="button" class="btn" id="pl-stop" data-act="stop" disabled>Остановить</button>
+      </div>
+    </form>
+    <dl class="kv" id="pl-state" aria-live="polite"></dl>
+  </dialog>
+
+  <dialog class="dlg" id="dlg-whatif" aria-labelledby="dlg-whatif-t">
+    <header class="dlg__head">
+      <h2 id="dlg-whatif-t">Что если</h2>
+      <button type="button" class="dlg__x" data-act="close" aria-label="Закрыть"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </header>
+    <div id="wi-body"></div>
+  </dialog>
+
+  <dialog class="dlg dlg--wide" id="dlg-review" aria-labelledby="dlg-review-t">
+    <header class="dlg__head">
+      <h2 id="dlg-review-t">Разбор прогноза</h2>
+      <button type="button" class="dlg__x" data-act="close" aria-label="Закрыть"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </header>
+    <div id="rv-body"></div>
+  </dialog>
+
+  <noscript><p class="noscript">Для работы дашборда нужен JavaScript.</p></noscript>
+</body>
+</html>

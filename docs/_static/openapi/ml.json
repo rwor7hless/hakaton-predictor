@@ -1,0 +1,538 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Transit Delay ML Core",
+    "description": "ML-ядро предиктора задержек: ансамбль CatBoost + PyTorch (ONNX), интервалы, вероятности, объяснения (SHAP), дообучение.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Проверка живости",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/model": {
+      "get": {
+        "summary": "Версия, признаки, метрики и состав ансамбля",
+        "operationId": "model_info_v1_model_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Model Info V1 Model Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/predict": {
+      "post": {
+        "summary": "Онлайн-прогноз задержки (пакетный)",
+        "operationId": "predict_v1_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              },
+              "examples": {
+                "online": {
+                  "summary": "Пример онлайн-прогноза",
+                  "value": {
+                    "items": [
+                      {
+                        "id": "vehicle-131672",
+                        "features": {
+                          "lead": 660,
+                          "gap_prev_plan": 60,
+                          "gap_next_plan": 60,
+                          "tgt_role": 0,
+                          "n_plan_between": 5,
+                          "plan_since_lp": 300,
+                          "est_now": 42,
+                          "dev_last": 30,
+                          "tgt_stop": "37.857186,55.730929",
+                          "route": "R9e0c5496"
+                        }
+                      }
+                    ],
+                    "explain": true
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/predict/offline": {
+      "post": {
+        "summary": "Прогноз в режиме сабмита (с подсказкой cur_dev, как в validate/points.csv)",
+        "operationId": "predict_offline_v1_predict_offline_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              },
+              "examples": {
+                "offline": {
+                  "summary": "Пример прогноза с подсказкой cur_dev",
+                  "value": {
+                    "items": [
+                      {
+                        "id": "131672_1767670800",
+                        "features": {
+                          "cur_dev": 274,
+                          "lead": 660,
+                          "gap_prev_plan": 60,
+                          "gap_next_plan": 60,
+                          "tgt_role": 0,
+                          "n_plan_between": 5,
+                          "plan_since_lp": 300,
+                          "tgt_stop": "37.857186,55.730929",
+                          "route": "R9e0c5496"
+                        }
+                      }
+                    ],
+                    "explain": false
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Задержка инференса и счётчики",
+        "operationId": "metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Metrics Metrics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/train": {
+      "post": {
+        "summary": "Запустить дообучение в фоне (горячая замена модели)",
+        "operationId": "train_v1_train_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainJob"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/train/{job_id}": {
+      "get": {
+        "summary": "Статус задачи дообучения",
+        "operationId": "train_status_v1_train__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainJob"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Contribution": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "shap": {
+            "type": "number",
+            "title": "Shap"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "text",
+          "shap"
+        ],
+        "title": "Contribution"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Item": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "features": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "features"
+        ],
+        "title": "Item",
+        "description": "Одна прогнозная точка: идентификатор и словарь признаков (см. ``GET /v1/model``)."
+      },
+      "OfflineItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "delay_s": {
+            "type": "number",
+            "title": "Delay S"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "delay_s"
+        ],
+        "title": "OfflineItem"
+      },
+      "OfflineResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OfflineItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "latency_ms",
+          "items"
+        ],
+        "title": "OfflineResponse"
+      },
+      "PredictItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "delay_s": {
+            "type": "number",
+            "title": "Delay S"
+          },
+          "q10_s": {
+            "type": "number",
+            "title": "Q10 S"
+          },
+          "q90_s": {
+            "type": "number",
+            "title": "Q90 S"
+          },
+          "p_late": {
+            "type": "number",
+            "title": "P Late"
+          },
+          "p_early": {
+            "type": "number",
+            "title": "P Early"
+          },
+          "contributions": {
+            "items": {
+              "$ref": "#/components/schemas/Contribution"
+            },
+            "type": "array",
+            "title": "Contributions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "delay_s",
+          "q10_s",
+          "q90_s",
+          "p_late",
+          "p_early"
+        ],
+        "title": "PredictItem"
+      },
+      "PredictRequest": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "explain": {
+            "type": "boolean",
+            "title": "Explain",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "PredictRequest"
+      },
+      "PredictResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PredictItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "latency_ms",
+          "items"
+        ],
+        "title": "PredictResponse"
+      },
+      "TrainJob": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "started_at": {
+            "type": "number",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "model_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Dir"
+          },
+          "log_tail": {
+            "type": "string",
+            "title": "Log Tail",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "state",
+          "started_at"
+        ],
+        "title": "TrainJob"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
